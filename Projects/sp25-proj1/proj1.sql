@@ -94,19 +94,48 @@ AS
 -- Question 3i
 CREATE VIEW q3i(playerid, namefirst, namelast, yearid, slg)
 AS
-  SELECT 1, 1, 1, 1, 1 -- replace this line
+  SELECT p.playerid, p.namefirst, p.namelast, b.yearid, 
+  CAST((b.H - b.H2B - b.H3B - b.HR) + 2 * b.H2B + 3 * b.H3B + 4 * b.HR AS FLOAT) 
+  / b.AB AS slg
+  FROM people AS p INNER JOIN batting AS b
+  ON p.playerid = b.playerid 
+  WHERE b.AB > 50 
+  ORDER BY slg DESC, b.yearid ASC, p.playerid ASC 
+  LIMIT 10
 ;
 
 -- Question 3ii
 CREATE VIEW q3ii(playerid, namefirst, namelast, lslg)
 AS
-  SELECT 1, 1, 1, 1 -- replace this line
+  SELECT p.playerid, p.namefirst, p.namelast,
+  CAST((SUM(b.H) - SUM(b.H2B) - SUM(b.H3B) - SUM(b.HR)) + 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4 * SUM(b.HR) AS FLOAT) 
+  / SUM(b.AB) AS lslg
+  FROM people AS p INNER JOIN batting AS b
+  ON p.playerid = b.playerid
+  GROUP BY p.playerid
+  HAVING SUM(b.AB) > 50
+  ORDER BY lslg DESC, p.playerid ASC
+  LIMIT 10
 ;
 
 -- Question 3iii
 CREATE VIEW q3iii(namefirst, namelast, lslg)
 AS
-  SELECT 1, 1, 1 -- replace this line
+  SELECT p.namefirst, p.namelast,
+  CAST((SUM(b.H) - SUM(b.H2B) - SUM(b.H3B) - SUM(b.HR)) + 2 * SUM(b.H2B) + 3 * SUM(b.H3B) + 4 * SUM(b.HR) AS FLOAT) 
+  / SUM(b.AB) AS lslg
+  FROM people AS p INNER JOIN batting AS b
+  ON p.playerid = b.playerid
+  GROUP BY p.playerid
+  HAVING SUM(b.AB) > 50 AND 
+  lslg > (
+    SELECT 
+      CAST((SUM(b2.H) - SUM(b2.H2B) - SUM(b2.H3B) - SUM(b2.HR)) + 2 * SUM(b2.H2B) + 3 * SUM(b2.H3B) + 4 * SUM(b2.HR) AS FLOAT) 
+    / SUM(b2.AB) AS lslg
+    FROM batting AS b2
+    WHERE b2.playerid = 'mayswi01'
+    GROUP BY b2.playerid
+  )
 ;
 
 -- Question 4i
