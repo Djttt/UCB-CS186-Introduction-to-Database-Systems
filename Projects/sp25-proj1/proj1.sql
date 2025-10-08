@@ -148,7 +148,8 @@ AS
 ;
 
 -- Question 4ii
-CREATE VIEW q4ii(binid, low, high, count) AS
+CREATE VIEW q4ii(binid, low, high, count)
+AS
 WITH stats AS (
     SELECT MIN(salary) AS min_salary,
            MAX(salary) AS max_salary,
@@ -157,23 +158,29 @@ WITH stats AS (
     WHERE yearid = 2016
 ),
 salary_bins AS (
-    SELECT CAST((salary - stats.min_salary) / stats.bin_width AS INT) AS binid
+    SELECT
+        CASE
+            WHEN CAST((salary - stats.min_salary) / stats.bin_width AS INT) >= 9
+                THEN 9
+            ELSE CAST((salary - stats.min_salary) / stats.bin_width AS INT)
+        END AS binid
     FROM salaries, stats
     WHERE yearid = 2016
 )
 SELECT
     b.binid,
     stats.min_salary + stats.bin_width * b.binid AS low,
-    CASE WHEN b.binid = 9 THEN CAST(stats.max_salary AS FLOAT)
-         ELSE stats.min_salary + stats.bin_width * (b.binid + 1)
+    CASE
+        WHEN b.binid = 9 THEN stats.max_salary  -- 最后一组上界=最大工资
+        ELSE stats.min_salary + stats.bin_width * (b.binid + 1)
     END AS high,
     COUNT(s.binid) AS count
 FROM binids b
-LEFT JOIN salary_bins s
-ON s.binid = b.binid
+LEFT JOIN salary_bins s ON s.binid = b.binid
 CROSS JOIN stats
 GROUP BY b.binid
 ORDER BY b.binid;
+
 
 
 -- Question 4iii
